@@ -1,0 +1,121 @@
+name: Generate Piper Releases (Part 2 - World)
+
+on:
+  workflow_dispatch:
+    inputs:
+      language:
+        description: 'Select language'
+        required: true
+        type: choice
+        options:
+          - 'Greek (el_GR)'
+          - 'Catalan (ca_ES)'
+          - 'Basque (eu_ES)'
+          - 'Albanian (sq_AL)'
+          - 'Latvian (lv_LV)'
+          - 'Lithuanian (lt_LT)'
+          - 'Estonian (et_EE)'
+          - 'Icelandic (is_IS)'
+          - 'Luxembourgish (lb_LU)'
+          - 'Georgian (ka_GE)'
+          - 'Hindi (hi_IN)'
+          - 'Arabic (ar)'
+          - 'Turkish (tr_TR)'
+          - 'Vietnamese (vi_VN)'
+          - 'Korean (ko_KR)'
+          - 'Indonesian (id_ID)'
+          - 'Kazakh (kk_KZ)'
+          - 'Persian (fa_IR)'
+          - 'Nepali (ne_NP)'
+          - 'Malayalam (ml_IN)'
+          - 'Swahili (sw)'
+          - 'Welsh (cy_GB)'
+          - 'Urdu (ur_PK)'
+          - 'Kurdish (kmr_TR)'
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Create Workspace
+        run: mkdir -p target_voice_pack
+
+      - name: Set Language Config
+        id: lang_config
+        run: |
+          python3 << 'PYEOF'
+          import os, sys
+          lang = os.environ.get("SELECTED_LANG", "")
+          config = {
+            "Greek (el_GR)":         ("piper-el",    "Greek",                "el_GR-rapunzelina-low"),
+            "Catalan (ca_ES)":       ("piper-ca",    "Catalan",              "ca_ES-upc_ona-medium,ca_ES-upc_ona-x_low,ca_ES-upc_pau-x_low"),
+            "Basque (eu_ES)":        ("piper-eu",    "Basque",               "eu_ES-upv_ehu-medium"),
+            "Albanian (sq_AL)":      ("piper-sq",    "Albanian",             "sq_AL-rudina-medium"),
+            "Latvian (lv_LV)":       ("piper-lv",    "Latvian",              "lv_LV-aivars-medium"),
+            "Lithuanian (lt_LT)":    ("piper-lt",    "Lithuanian",           "lt_LT-uabc-medium"),
+            "Estonian (et_EE)":      ("piper-et",    "Estonian",             "et_EE-vainolar-medium"),
+            "Icelandic (is_IS)":     ("piper-is",    "Icelandic",            "is_IS-salka-medium,is_IS-steinn-medium,is_IS-ugla-medium"),
+            "Luxembourgish (lb_LU)": ("piper-lb",    "Luxembourgish",        "lb_LU-marylux-medium"),
+            "Georgian (ka_GE)":      ("piper-ka",    "Georgian",             "ka_GE-natia-medium"),
+            "Hindi (hi_IN)":         ("piper-hi",    "Hindi",                "hi_IN-sangita-medium"),
+            "Arabic (ar)":           ("piper-ar",    "Arabic",               "ar_JO-kareem-low,ar_JO-kareem-medium"),
+            "Turkish (tr_TR)":       ("piper-tr",    "Turkish",              "tr_TR-dfki-medium"),
+            "Vietnamese (vi_VN)":    ("piper-vi",    "Vietnamese",           "vi_VN-25hours_single-low,vi_VN-vais1000-medium,vi_VN-vivos-x_low"),
+            "Korean (ko_KR)":        ("piper-ko",    "Korean",               "ko_KO-kss-medium"),
+            "Indonesian (id_ID)":    ("piper-id",    "Indonesian",           "id_ID-argit-medium"),
+            "Kazakh (kk_KZ)":        ("piper-kk",    "Kazakh",               "kk_KZ-iseke-x_low,kk_KZ-raya-x_low"),
+            "Persian (fa_IR)":       ("piper-fa",    "Persian",              "fa_IR-gyro-medium"),
+            "Nepali (ne_NP)":        ("piper-ne",    "Nepali",               "ne_NP-google-medium,ne_NP-google-x_low"),
+            "Malayalam (ml_IN)":     ("piper-ml",    "Malayalam",            "ml_IN-cmu-indic-medium"),
+            "Swahili (sw)":          ("piper-sw",    "Swahili",              "sw_CD-lanfrica-medium"),
+            "Welsh (cy_GB)":         ("piper-cy",    "Welsh",                "cy_GB-gwryw_gogleddol-medium"),
+            "Urdu (ur_PK)":          ("piper-ur",    "Urdu",                 "ur_PK-umar-medium"),
+            "Kurdish (kmr_TR)":      ("piper-kmr",   "Kurdish",              "kmr_TR-cemil-medium"),
+          }
+          if lang not in config:
+              print(f"ERROR: Unknown language: {lang}", file=sys.stderr)
+              sys.exit(1)
+          tag, name, models = config[lang]
+          with open(os.environ["GITHUB_OUTPUT"], "a") as f:
+              f.write(f"tag_name={tag}\n")
+              f.write(f"lang_name={name}\n")
+              f.write(f"models={models}\n")
+          PYEOF
+        env:
+          SELECTED_LANG: ${{ github.event.inputs.language }}
+
+      - name: Download and Extract Models
+        run: |
+          cd target_voice_pack
+          GH_BASE="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models"
+          IFS=',' read -ra MODEL_LIST <<< "${{ steps.lang_config.outputs.models }}"
+          for model_name in "${MODEL_LIST[@]}"; do
+            full_name="vits-piper-${model_name}"
+            echo "Downloading ${full_name}..."
+            wget -q "${GH_BASE}/${full_name}.tar.bz2"
+            tar -xf "${full_name}.tar.bz2"
+            mv "${full_name}"/*.onnx "${model_name}.onnx"
+            if [ -f "${full_name}/tokens.txt" ]; then
+              mv "${full_name}/tokens.txt" "${model_name}.tokens.txt"
+            else
+              mv "${full_name}"/*.txt "${model_name}.tokens.txt" 2>/dev/null || true
+            fi
+            rm -rf "${full_name}" "${full_name}.tar.bz2"
+            echo "Done: ${model_name}"
+          done
+
+      - name: Publish Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd target_voice_pack
+          gh release create ${{ steps.lang_config.outputs.tag_name }} *.onnx *.txt \
+            --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
+            --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models" \
+            --repo CodeBySonu95/VoxSherpa-TTS
