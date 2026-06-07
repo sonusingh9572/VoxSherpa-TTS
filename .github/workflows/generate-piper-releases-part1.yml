@@ -53,8 +53,8 @@ jobs:
           import os, sys
           lang = os.environ.get("SELECTED_LANG", "")
           config = {
-            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-ramona-low,de_DE-eva_k-x_low,de_DE-karlsson-low,de_DE-pavoque-low,de_DE-miro-high,de_DE-dii-high,de_DE-glados-low,de_DE-glados-medium,de_DE-glados-high,de_DE-glados_turret-low,de_DE-glados_turret-medium,de_DE-glados_turret-high"),
-            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-model3,fr_FR-tom-medium,fr_FR-upmc-medium"),
+            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-r[...]
+            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-[...]
             "Spanish ES (es_ES)":    ("piper-es-ES", "Spanish Spain",        "es_ES-carlfm-x_low,es_ES-davefx-medium,es_ES-glados-medium,es_ES-miro-high,es_ES-sharvard-medium"),
             "Spanish AR (es_AR)":    ("piper-es-AR", "Spanish Argentina",    "es_AR-daniela-high"),
             "Spanish MX (es_MX)":    ("piper-es-MX", "Spanish Mexico",      "es_MX-ald-medium,es_MX-claude-high"),
@@ -117,5 +117,4 @@ jobs:
           cd target_voice_pack
           gh release create ${{ steps.lang_config.outputs.tag_name }} *.onnx *.txt \
             --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
-            --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models" \
-            --repo CodeBySonu95/VoxSherpa-TTS
+            --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models"
