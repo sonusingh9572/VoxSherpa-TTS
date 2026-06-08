@@ -111,10 +111,11 @@ jobs:
           done
 
       - name: Publish Release
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          cd target_voice_pack
-          gh release create ${{ steps.lang_config.outputs.tag_name }} *.onnx *.txt \
-            --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
-            --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models"
+  env:
+    GH_TOKEN: ${{ github.token }}
+  run: |
+    cd target_voice_pack
+    gh release create ${{ steps.lang_config.outputs.tag_name }} *.onnx *.txt \
+      --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
+      --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models" \
+      --repo sonusingh9572/VoxSherpa-TTS
