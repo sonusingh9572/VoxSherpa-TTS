@@ -569,4 +569,4 @@ jobs:
           gh release create ${{ env.TAG_NAME }} *.onnx *.txt \
             --title "${{ env.RELEASE_TITLE }}" \
             --notes-file release_notes.md \
-            --repo CodeBySonu95/VoxSherpa-TTS
+            --repo sonusingh9572/VoxSherpa-TTS
