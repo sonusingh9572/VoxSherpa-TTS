@@ -53,8 +53,8 @@ jobs:
           import os, sys
           lang = os.environ.get("SELECTED_LANG", "")
           config = {
-            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-r[...]
-            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-[...]
+            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-r[...]"),
+            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-[...]"),
             "Spanish ES (es_ES)":    ("piper-es-ES", "Spanish Spain",        "es_ES-carlfm-x_low,es_ES-davefx-medium,es_ES-glados-medium,es_ES-miro-high,es_ES-sharvard-medium"),
             "Spanish AR (es_AR)":    ("piper-es-AR", "Spanish Argentina",    "es_AR-daniela-high"),
             "Spanish MX (es_MX)":    ("piper-es-MX", "Spanish Mexico",      "es_MX-ald-medium,es_MX-claude-high"),
@@ -110,7 +110,7 @@ jobs:
             echo "Done: ${model_name}"
           done
 
-            - name: Publish Release
+      - name: Publish Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -118,4 +118,3 @@ jobs:
           gh release create ${{ steps.lang_config.outputs.tag_name }} *.onnx *.txt \
             --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
             --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models"
-            
