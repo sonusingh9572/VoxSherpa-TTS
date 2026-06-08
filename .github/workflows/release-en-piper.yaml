@@ -1,0 +1,45 @@
+name: Clone Piper English Release
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  copy-release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Download All Assets from Source Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p cloned_assets
+          # Download all assets from the specified target release
+          gh release download piper-en-fp32 --repo CodeBySonu95/VoxSherpa-TTS --dir cloned_assets
+
+      - name: Create Release Notes
+        run: |
+          cat << 'EOF' > release_notes.md
+          ## Contents
+          
+          This release exclusively contains **Piper** models and their respective token text files.
+          
+          ## Credits & Upstream Source
+          
+          These weights are pulled directly from the upstream Sherpa-ONNX repository.
+          
+          - **Upstream Source:** [k2-fsa/sherpa-onnx TTS Models](https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models)
+          EOF
+
+      - name: Publish Copied Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          cd cloned_assets
+          gh release create piper-en-fp32 * \
+            --title "Piper English Models Pack" \
+            --notes-file ../release_notes.md
