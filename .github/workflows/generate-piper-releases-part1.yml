@@ -53,8 +53,8 @@ jobs:
           import os, sys
           lang = os.environ.get("SELECTED_LANG", "")
           config = {
-            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-pavoque-low,de_DE-pavoque-medium"),
-            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-model3"),
+            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-r[...]"),
+            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-[...]"),
             "Spanish ES (es_ES)":    ("piper-es-ES", "Spanish Spain",        "es_ES-carlfm-x_low,es_ES-davefx-medium,es_ES-glados-medium,es_ES-miro-high,es_ES-sharvard-medium"),
             "Spanish AR (es_AR)":    ("piper-es-AR", "Spanish Argentina",    "es_AR-daniela-high"),
             "Spanish MX (es_MX)":    ("piper-es-MX", "Spanish Mexico",      "es_MX-ald-medium,es_MX-claude-high"),
@@ -95,122 +95,42 @@ jobs:
           cd target_voice_pack
           GH_BASE="https://github.com/k2-fsa/sherpa-onnx/releases/download/tts-models"
           IFS=',' read -ra MODEL_LIST <<< "${{ steps.lang_config.outputs.models }}"
-          
-          SKIPPED_MODELS=()
-          DOWNLOADED_MODELS=()
-          FAILED_MODELS=()
-          
           for model_name in "${MODEL_LIST[@]}"; do
-            # Trim whitespace
-            model_name=$(echo "$model_name" | xargs)
-            
             full_name="vits-piper-${model_name}"
-            echo "=========================================="
-            echo "🔄 Downloading ${full_name}..."
-            echo "=========================================="
+            echo "----------------------------------------"
+            echo "Trying to download: ${full_name}"
             
-            # Try to download model with error handling
-            if wget -q --timeout=60 --tries=2 "${GH_BASE}/${full_name}.tar.bz2" 2>/dev/null; then
-              # Check if file was actually downloaded
-              if [ -f "${full_name}.tar.bz2" ] && [ -s "${full_name}.tar.bz2" ]; then
-                # Try to extract
-                if tar -xf "${full_name}.tar.bz2" 2>/dev/null; then
-                  # Extract .onnx file
-                  if mv "${full_name}"/*.onnx "${model_name}.onnx" 2>/dev/null; then
-                    # Extract tokens file
-                    if [ -f "${full_name}/tokens.txt" ]; then
-                      mv "${full_name}/tokens.txt" "${model_name}.tokens.txt" 2>/dev/null || true
-                    else
-                      mv "${full_name}"/*.txt "${model_name}.tokens.txt" 2>/dev/null || true
-                    fi
-                    # Cleanup
-                    rm -rf "${full_name}" "${full_name}.tar.bz2" 2>/dev/null || true
-                    echo "✅ Successfully downloaded: ${model_name}"
-                    DOWNLOADED_MODELS+=("${model_name}")
-                  else
-                    echo "⚠️  WARNING: Could not extract ONNX file for ${model_name}, skipping..."
-                    SKIPPED_MODELS+=("${model_name}")
-                    rm -rf "${full_name}" "${full_name}.tar.bz2" 2>/dev/null || true
-                  fi
+            # Safe Check: Agar wget fail hota hai (404), toh workflow nahi rukega, yeh skip karega
+            if wget -q "${GH_BASE}/${full_name}.tar.bz2"; then
+              echo "Download successful. Extracting..."
+              if tar -xf "${full_name}.tar.bz2"; then
+                mv "${full_name}"/*.onnx "${model_name}.onnx" 2>/dev/null || true
+                if [ -f "${full_name}/tokens.txt" ]; then
+                  mv "${full_name}/tokens.txt" "${model_name}.tokens.txt" 2>/dev/null || true
                 else
-                  echo "⚠️  WARNING: Could not extract tar file for ${model_name}, skipping..."
-                  SKIPPED_MODELS+=("${model_name}")
-                  rm -f "${full_name}.tar.bz2" 2>/dev/null || true
+                  mv "${full_name}"/*.txt "${model_name}.tokens.txt" 2>/dev/null || true
                 fi
+                echo "Successfully processed: ${model_name}"
               else
-                echo "⚠️  WARNING: Download failed or file is empty for ${model_name}, skipping..."
-                SKIPPED_MODELS+=("${model_name}")
-                rm -f "${full_name}.tar.bz2" 2>/dev/null || true
+                echo "WARNING: Failed to extract ${full_name}.tar.bz2. Skipping..."
               fi
+              rm -rf "${full_name}" "${full_name}.tar.bz2"
             else
-              echo "⚠️  WARNING: Could not download ${model_name}, skipping..."
-              SKIPPED_MODELS+=("${model_name}")
-              rm -f "${full_name}.tar.bz2" 2>/dev/null || true
+              echo "WARNING: ${full_name}.tar.bz2 not found on upstream server. Skipping..."
             fi
-            echo ""
           done
-          
-          echo "=========================================="
-          echo "📊 DOWNLOAD SUMMARY"
-          echo "=========================================="
-          echo "✅ Successfully Downloaded: ${#DOWNLOADED_MODELS[@]}"
-          for model in "${DOWNLOADED_MODELS[@]}"; do
-            echo "   ✓ $model"
-          done
-          echo ""
-          echo "⚠️  Skipped Models: ${#SKIPPED_MODELS[@]}"
-          for model in "${SKIPPED_MODELS[@]}"; do
-            echo "   ✗ $model"
-          done
-          echo ""
-          
-          # Fail if no models were downloaded
-          if [ ${#DOWNLOADED_MODELS[@]} -eq 0 ]; then
-            echo "❌ ERROR: No models were successfully downloaded!"
-            exit 1
-          fi
-          
-          MODEL_COUNT=$(ls -1 *.onnx 2>/dev/null | wc -l)
-          echo "✅ Job completed successfully with $MODEL_COUNT models"
-          echo ""
 
-      - name: Validate and Publish Release
+      - name: Publish Release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           cd target_voice_pack
-          
-          # Count files
-          ONNX_COUNT=$(ls -1 *.onnx 2>/dev/null | wc -l)
-          TXT_COUNT=$(ls -1 *.txt 2>/dev/null | wc -l)
-          
-          echo "📦 Files ready for release:"
-          echo "   ONNX files: $ONNX_COUNT"
-          echo "   TXT files: $TXT_COUNT"
-          echo ""
-          
-          # Verify at least one model
-          if [ "$ONNX_COUNT" -eq 0 ]; then
-            echo "❌ No ONNX files found, cannot create release"
+          # Check if there is at least one .onnx file successfully processed
+          if ls *.onnx 1> /dev/null 2>&1; then
+            gh release create ${{ steps.lang_config.outputs.tag_name }} * \
+              --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack" \
+              --notes "Pre-compiled Piper voice models for sherpa-onnx. Source: https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models"
+          else
+            echo "ERROR: No models were successfully downloaded. Aborting release creation to avoid empty release."
             exit 1
           fi
-          
-          # List files being uploaded
-          echo "📋 Files to be uploaded:"
-          ls -lh *.onnx *.txt 2>/dev/null || true
-          echo ""
-          
-          # Create release with successful models only
-          echo "🚀 Creating release: ${{ steps.lang_config.outputs.tag_name }}"
-          gh release create "${{ steps.lang_config.outputs.tag_name }}" *.onnx *.txt \
-            --title "Piper ${{ steps.lang_config.outputs.lang_name }} Models Pack ($ONNX_COUNT models)" \
-            --notes "Pre-compiled Piper voice models for sherpa-onnx.
-
-**Downloaded Models:** $ONNX_COUNT
-**Source:** https://github.com/k2-fsa/sherpa-onnx/releases/tag/tts-models
-
-These models are ready to use with sherpa-onnx TTS engine." || {
-            echo "⚠️  Release already exists or error occurred, but $ONNX_COUNT models are ready"
-          }
-          
-          echo "✅ Release completed successfully!"
