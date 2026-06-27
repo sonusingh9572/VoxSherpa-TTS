@@ -28,10 +28,8 @@ on:
           - 'Czech (cs_CZ)'
           - 'Slovak (sk_SK)'
           - 'Hungarian (hu_HU)'
-          - 'Croatian (hr_HR)'
           - 'Serbian (sr_RS)'
           - 'Slovenian (sl_SI)'
-          - 'Bulgarian (bg_BG)'
 
 permissions:
   contents: write
@@ -53,17 +51,17 @@ jobs:
           import os, sys
           lang = os.environ.get("SELECTED_LANG", "")
           config = {
-            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low,de_DE-r[...]"),
-            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2,fr_FR-tjiho-[...]"),
+            "German (de_DE)":        ("piper-de",    "German",               "de_DE-thorsten-low,de_DE-thorsten-medium,de_DE-thorsten-high,de_DE-thorsten_emotional-medium,de_DE-kerstin-low"),
+            "French (fr_FR)":        ("piper-fr",    "French",               "fr_FR-gilles-low,fr_FR-miro-high,fr_FR-siwis-low,fr_FR-siwis-medium,fr_FR-tjiho-model1,fr_FR-tjiho-model2"),
             "Spanish ES (es_ES)":    ("piper-es-ES", "Spanish Spain",        "es_ES-carlfm-x_low,es_ES-davefx-medium,es_ES-glados-medium,es_ES-miro-high,es_ES-sharvard-medium"),
             "Spanish AR (es_AR)":    ("piper-es-AR", "Spanish Argentina",    "es_AR-daniela-high"),
-            "Spanish MX (es_MX)":    ("piper-es-MX", "Spanish Mexico",      "es_MX-ald-medium,es_MX-claude-high"),
+            "Spanish MX (es_MX)":    ("piper-es-MX", "Spanish Mexico",       "es_MX-ald-medium,es_MX-claude-high"),
             "Italian (it_IT)":       ("piper-it",    "Italian",              "it_IT-dii-high,it_IT-miro-high,it_IT-paola-medium,it_IT-riccardo-x_low"),
             "Portuguese BR (pt_BR)": ("piper-pt-BR", "Portuguese Brazil",    "pt_BR-cadu-medium,pt_BR-dii-high,pt_BR-edresson-low,pt_BR-faber-medium,pt_BR-jeff-medium,pt_BR-miro-high"),
             "Portuguese PT (pt_PT)": ("piper-pt-PT", "Portuguese Portugal",  "pt_PT-dii-high,pt_PT-miro-high,pt_PT-tugao-medium"),
             "Russian (ru_RU)":       ("piper-ru",    "Russian",              "ru_RU-denis-medium,ru_RU-dmitri-medium,ru_RU-irina-medium,ru_RU-ruslan-medium"),
             "Polish (pl_PL)":        ("piper-pl",    "Polish",               "pl_PL-gosia-medium"),
-            "Dutch (nl_NL)":         ("piper-nl",    "Dutch",                "nl_NL-mls-medium,nl_NL-mls_5809-low,nl_NL-mls_7432-low"),
+            "Dutch (nl_NL)":         ("piper-nl",    "Dutch",                "nl_BE-nathalie-medium,nl_NL-pim-medium,nl_NL-ronnie-medium"),
             "Ukrainian (uk_UA)":     ("piper-uk",    "Ukrainian",            "uk_UA-lada-x_low,uk_UA-ukrainian_tts-medium"),
             "Romanian (ro_RO)":      ("piper-ro",    "Romanian",             "ro_RO-mihai-medium"),
             "Swedish (sv_SE)":       ("piper-sv",    "Swedish",              "sv_SE-nst-medium"),
@@ -73,10 +71,8 @@ jobs:
             "Czech (cs_CZ)":         ("piper-cs",    "Czech",                "cs_CZ-jirka-low,cs_CZ-jirka-medium"),
             "Slovak (sk_SK)":        ("piper-sk",    "Slovak",               "sk_SK-lili-medium"),
             "Hungarian (hu_HU)":     ("piper-hu",    "Hungarian",            "hu_HU-anna-medium,hu_HU-berta-medium"),
-            "Croatian (hr_HR)":      ("piper-hr",    "Croatian",             "hr_HR-jakov-medium"),
-            "Serbian (sr_RS)":       ("piper-sr",    "Serbian",              "sr_RS-serbski_model-medium"),
-            "Slovenian (sl_SI)":     ("piper-sl",    "Slovenian",            "sl_SI-artur-medium"),
-            "Bulgarian (bg_BG)":     ("piper-bg",    "Bulgarian",            "bg_BG-krassimira-medium"),
+            "Serbian (sr_RS)":       ("piper-sr",    "Serbian",              "sr_RS-serbski_institut-medium"),
+            "Slovenian (sl_SI)":     ("piper-sl",    "Slovenian",            "sl_SI-artur-medium")
           }
           if lang not in config:
               print(f"ERROR: Unknown language: {lang}", file=sys.stderr)
@@ -100,7 +96,7 @@ jobs:
             echo "----------------------------------------"
             echo "Trying to download: ${full_name}"
             
-            # Safe Check: Agar wget fail hota hai (404), toh workflow nahi rukega, yeh skip karega
+            # Safe Check: If wget fails (e.g., 404), the workflow will not stop; it will skip to the next model
             if wget -q "${GH_BASE}/${full_name}.tar.bz2"; then
               echo "Download successful. Extracting..."
               if tar -xf "${full_name}.tar.bz2"; then
